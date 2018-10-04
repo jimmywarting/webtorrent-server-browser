@@ -1,5 +1,5 @@
 # webtorrent-server-browser
-test torrent.createServer using service worker
+test `torrent.createServer()` using service worker
 
 demo: https://jimmywarting.github.io/webtorrent-server-browser/
 

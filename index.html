@@ -167,7 +167,7 @@
 
         const res = {
           listen(port) {
-            const scope = `/${port || Math.floor(Math.random() * 65535) + 1}`
+            const scope = `./${port || Math.floor(Math.random() * 65535) + 1}`
             res.scope = scope
             return navigator.serviceWorker.getRegistration(scope).then(swReg => {
               return swReg || navigator.serviceWorker.register('sw.js', { scope })

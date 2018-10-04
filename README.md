@@ -1,6 +1,8 @@
 # webtorrent-server-browser
 test torrent.createServer using service worker
 
+demo: https://jimmywarting.github.io/webtorrent-server-browser/
+
 # Motivation
 Using html video MSE to decode/encode a video in order to support streaming/seaking with javascript is a bit slow.
 doing it that way also means we have to support more containers manually. 

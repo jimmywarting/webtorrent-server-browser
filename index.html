@@ -20,10 +20,10 @@
         a.innerText = server.scope
         document.body.appendChild(a)
 
-        // const iframe = document.createElement('iframe')
-        // iframe.controls = true
-        // iframe.src = `${server.scope}/${torrent.files[5].name}?index=5`
-        // document.body.appendChild(iframe)
+        const iframe = document.createElement('iframe')
+        // video.controls = true
+        iframe.src = `${server.scope}/${torrent.files[5].name}?index=5`
+        document.body.appendChild(iframe)
       })
 
       // Wish there where a easier way to get some of webtorrent's classes

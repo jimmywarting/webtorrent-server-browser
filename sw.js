@@ -1,8 +1,18 @@
+// Activate event
+// Be sure to call self.clients.claim()
+self.addEventListener('activate', evt =>  {
+	// `claim()` sets this worker as the active worker for all clients that
+	// match the workers scope and triggers an `oncontrollerchange` event for
+	// the clients.
+	return self.clients.claim()
+})
+
 self.addEventListener('fetch', evt => {
   const { request } = evt
   const { url, method } = request
   const headers = [...request.headers]
-  console.log(url)
+  if (!url.includes(self.registration.scope + 'webtorrent/')) return null
+
   function getConsumer(clients) {
     return new Promise((rs, rj) => {
       // Use race condition for whoever controls the response stream

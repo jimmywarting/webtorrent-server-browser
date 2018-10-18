@@ -16,14 +16,13 @@
         await server.listen()
 
         const a = document.createElement('a')
-        a.href = server.scope
-        a.innerText = server.scope
+        a.href = a.innerText = `./webtorrent/${torrent.infoHash}/`
         document.body.appendChild(a)
 
-        const iframe = document.createElement('iframe')
-        // video.controls = true
-        iframe.src = `${server.scope}/${torrent.files[5].name}?index=5`
-        document.body.appendChild(iframe)
+        const video = document.createElement('video')
+        video.controls = true
+        video.src = `./webtorrent/${torrent.infoHash}/${torrent.files[5].path}`
+        document.body.appendChild(video)
       })
 
       // Wish there where a easier way to get some of webtorrent's classes so i can patch stuff
@@ -56,7 +55,7 @@
         const torrent = this
 
         function serveIndexPage () {
-          const listHtml = torrent.files.map((file, i) => `<li><a x_download="${file.name}" href="${registration.scope}/${file.name}?index=${i}">${file.path}</a> (${file.length} bytes)</li>`).join('<br>')
+          const listHtml = torrent.files.map((file, i) => `<li><a x_download="${file.name}" href="${registration.scope}webtorrent/${torrent.infoHash}/${file.path}">${file.path}</a> (${file.length} bytes)</li>`).join('<br>')
 
           const body = getPageHTML(
             `${torrent.name} - WebTorrent`,
@@ -115,59 +114,45 @@
 
 
         navigator.serviceWorker.addEventListener('message', evt => {
-          if (evt.data &&
-              typeof evt.data === 'object' &&
-              evt.data.scope === registration.scope
-          ) {
-            const root = new URL(registration.scope).pathname
-            const url = new URL(evt.data.url)
-            const pathname = url.pathname
-            const respond = msg => evt.ports[0].postMessage(msg)
-            console.log(evt.data)
-            if (pathname === '/favicon.ico') {
-              return respond(serve404Page)
-            }
+          const root = new URL(registration.scope).pathname
+          const url = new URL(evt.data.url)
+          const pathname = url.pathname.split(`webtorrent/${torrent.infoHash}/`)[1]
+          const respond = msg => evt.ports[0].postMessage(msg)
 
-            if (pathname === root) {
-              return respond(serveIndexPage())
-            }
+          if (pathname === '') {
+            return respond(serveIndexPage())
+          }
 
-            const index = url.searchParams.get('index')
-            if (Number.isNaN(index) || index >= this.files.length) {
-              return respond(serve404Page())
-            }
+          const file = torrent.files.find(f => f.path === pathname)
+          const res = serveFile(file, evt.data)
+          if (res.stream) {
+            const stream = res.stream
+            delete res.stream
 
-            const file = this.files[index]
-            const res = serveFile(file, evt.data)
-            if (res.stream) {
-              const stream = res.stream
-              delete res.stream
+            stream.once('end', () => {
+              respond(null)  // Signal end event
+              evt.ports[0].onmessage = null
+            })
 
-              stream.once('end', () => {
-                respond(null)  // Signal end event
-                evt.ports[0].onmessage = null
-              })
-
-              evt.ports[0].onmessage = evt => {
-                const chunk = stream.read()
-                if (chunk === null) {
-                  stream.once('readable', () => {
-                    const chunk = stream.read()
-                    respond(new Uint8Array(chunk))
-                  })
-                } else {
+            evt.ports[0].onmessage = evt => {
+              const chunk = stream.read()
+              if (chunk === null) {
+                stream.once('readable', () => {
+                  const chunk = stream.read()
                   respond(new Uint8Array(chunk))
-                }
+                })
+              } else {
+                respond(new Uint8Array(chunk))
               }
             }
-
-            respond(res)
           }
+
+          respond(res)
         })
 
         const res = {
           listen(port) {
-            const scope = `./${port || Math.floor(Math.random() * 65535) + 1}`
+            const scope = `./`
             res.scope = scope
             return navigator.serviceWorker.getRegistration(scope).then(swReg => {
               return swReg || navigator.serviceWorker.register('sw.js', { scope })

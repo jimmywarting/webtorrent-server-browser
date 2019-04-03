@@ -17,6 +17,8 @@
 
         const a = document.createElement('a')
         a.href = a.innerText = `./webtorrent/${torrent.infoHash}/`
+        a.innerText += ' (opens in a new tab - since you need to have this page open for webtorrent to work)'
+        a.target = '_blank'
         document.body.appendChild(a)
 
         const video = document.createElement('video')
